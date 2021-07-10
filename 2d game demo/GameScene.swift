@@ -9,80 +9,144 @@ import SpriteKit
 import GameplayKit
 
 class GameScene: SKScene {
-    
-    private var label : SKLabelNode?
-    private var spinnyNode : SKShapeNode?
-    
-    override func didMove(to view: SKView) {
-        
-        // Get label node from scene and store it for use later
-        self.label = self.childNode(withName: "//helloLabel") as? SKLabelNode
-        if let label = self.label {
-            label.alpha = 0.0
-            label.run(SKAction.fadeIn(withDuration: 2.0))
-        }
-        
-        // Create shape node to use during mouse interaction
-        let w = (self.size.width + self.size.height) * 0.05
-        self.spinnyNode = SKShapeNode.init(rectOf: CGSize.init(width: w, height: w), cornerRadius: w * 0.3)
-        
-        if let spinnyNode = self.spinnyNode {
-            spinnyNode.lineWidth = 2.5
-            
-            spinnyNode.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(Double.pi), duration: 1)))
-            spinnyNode.run(SKAction.sequence([SKAction.wait(forDuration: 0.5),
-                                              SKAction.fadeOut(withDuration: 0.5),
-                                              SKAction.removeFromParent()]))
-        }
-    }
-    
-    
-    func touchDown(atPoint pos : CGPoint) {
-        if let n = self.spinnyNode?.copy() as! SKShapeNode? {
-            n.position = pos
-            n.strokeColor = SKColor.green
-            self.addChild(n)
-        }
-    }
-    
-    func touchMoved(toPoint pos : CGPoint) {
-        if let n = self.spinnyNode?.copy() as! SKShapeNode? {
-            n.position = pos
-            n.strokeColor = SKColor.blue
-            self.addChild(n)
-        }
-    }
-    
-    func touchUp(atPoint pos : CGPoint) {
-        if let n = self.spinnyNode?.copy() as! SKShapeNode? {
-            n.position = pos
-            n.strokeColor = SKColor.red
-            self.addChild(n)
-        }
-    }
-    
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let label = self.label {
-            label.run(SKAction.init(named: "Pulse")!, withKey: "fadeInOut")
-        }
-        
-        for t in touches { self.touchDown(atPoint: t.location(in: self)) }
-    }
-    
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { self.touchMoved(toPoint: t.location(in: self)) }
-    }
-    
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { self.touchUp(atPoint: t.location(in: self)) }
-    }
-    
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { self.touchUp(atPoint: t.location(in: self)) }
-    }
-    
-    
-    override func update(_ currentTime: TimeInterval) {
-        // Called before each frame is rendered
-    }
+	
+	// Nodes
+	var player: SKNode?
+	var joystick: SKNode?
+	var knob: SKNode?
+	var arrow: SKNode?
+	var button: SKNode?
+	
+	// Booleans
+	var joystickAction = false
+	var shootingState = false
+	
+	// Measure
+	var knobRadius : CGFloat = 50.0
+	
+	// Sprite Engine
+	var prevY : CGFloat = 0.0
+	var prevTimeInterval : TimeInterval = 0
+	var facingRight = true
+	var playerSpeed = 8.0
+	
+	override func didMove(to view: SKView) {
+		player = childNode(withName: "alien")
+		joystick = childNode(withName: "joystick")
+		knob = joystick?.childNode(withName: "knob")
+		arrow = player?.childNode(withName: "arrow")
+		button = childNode(withName: "button")
+		arrow?.isHidden = true
+	}
+	
+}
+
+// Touches
+extension GameScene {
+	override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+		for touch in touches {
+			if let knob = knob {
+				let location = touch.location(in: joystick!)
+				joystickAction = knob.frame.contains(location)
+			}
+			
+			if let button = button {
+				if button.contains(touch.location(in: self)) {
+					shootingState = !shootingState
+				}
+				arrow?.isHidden = !shootingState
+			}
+				
+			if shootingState && touch.location(in: self).x > 400 {
+				prevY = touch.location(in: self).y
+			}
+		}
+	}
+	
+	override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+		guard let joystick = joystick else {return}
+		guard let knob = knob else {return}
+		
+		if !joystickAction && !shootingState {re#imageLiteral(resourceName: "simulator_screenshot_8A0461B6-C3EE-4F92-89DB-AD2C7EF2178B.png")turn}
+		
+		for touch in touches {
+			if shootingState && touch.location(in: self).x > 400 {
+				let posY = touch.location(in: self).y
+				if posY > prevY {
+					let arrowAction = SKAction.scaleY(to: arrow!.yScale + 1, duration: 0.1)
+					arrow?.run(arrowAction)
+				} else if posY < prevY {
+					let arrowAction = SKAction.scaleY(to: arrow!.yScale - 1, duration: 0.1)
+					arrow?.run(arrowAction)
+				}
+				prevY = posY
+			} else {
+				let pos = touch.location(in: joystick)
+				
+				let length = sqrt(pow(pos.x, 2) + pow(pos.y, 2))
+				let angle = atan2(pos.y, pos.x)
+				
+				if knobRadius > length {
+					knob.position = pos
+				} else {
+					knob.position = CGPoint(x: cos(angle) * knobRadius, y: sin(angle) * knobRadius)
+				}
+			}
+		}
+	}
+	
+	override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+		for touch in touches {
+			let xJoystickCoordinate = touch.location(in: joystick!).x
+			let xLimit : CGFloat = 200.0
+			if !shootingState && xJoystickCoordinate > -xLimit && xJoystickCoordinate < xLimit {
+				resetKnobPos()
+			}
+		}
+	}
+}
+
+// Actions
+extension GameScene {
+	func resetKnobPos () {
+		let initialPoint = CGPoint(x: 0, y: 0)
+		let moveBack = SKAction.move(to: initialPoint, duration: 0.1)
+		moveBack.timingMode = .linear
+		knob?.run(moveBack)
+		joystickAction = false
+	}
+}
+
+// Game Loop
+extension GameScene {
+	override func update(_ currentTime: TimeInterval) {
+		let deltaTime = currentTime - prevTimeInterval
+		prevTimeInterval = currentTime
+		
+		// player movement
+		if shootingState {
+			arrow?.isHidden = false
+			guard let knob = knob else {return}
+			let xPos = Double(knob.position.x)
+			let yPos = Double(knob.position.y)
+			let angle = atan2(yPos, xPos) - .pi/2
+			let arrowAction = SKAction.rotate(toAngle: CGFloat(angle), duration: 0.1)
+			arrow?.run(arrowAction)
+		} else {
+			guard let knob = knob else {return}
+			let xPos = Double(knob.position.x)
+			let displacement = CGVector(dx: deltaTime * xPos * playerSpeed, dy: 0)
+			let move = SKAction.move(by: displacement, duration: 0)
+			let faceAction : SKAction!
+			let movingRight = xPos >= 0
+			if (movingRight != facingRight) {
+				facingRight = movingRight
+				let faceMovement = SKAction.scaleX(to: (facingRight == true) ? 1:-1, duration: 0.1)
+				faceAction = SKAction.sequence([move, faceMovement])
+			} else {
+				faceAction = move
+			}
+			player?.run(faceAction)
+		}
+	}
 }

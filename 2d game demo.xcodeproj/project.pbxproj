@@ -559,7 +559,7 @@
 				627D2E2C2696ECA300ABDB82 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		627D2E2D2696ECA300ABDB82 /* Build configuration list for PBXNativeTarget "2d game demo" */ = {
 			isa = XCConfigurationList;
@@ -568,7 +568,7 @@
 				627D2E2F2696ECA300ABDB82 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		627D2E302696ECA300ABDB82 /* Build configuration list for PBXNativeTarget "2d game demoTests" */ = {
 			isa = XCConfigurationList;
@@ -577,7 +577,7 @@
 				627D2E322696ECA300ABDB82 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		627D2E332696ECA300ABDB82 /* Build configuration list for PBXNativeTarget "2d game demoUITests" */ = {
 			isa = XCConfigurationList;
@@ -586,7 +586,7 @@
 				627D2E352696ECA300ABDB82 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};
